@@ -626,13 +626,19 @@ class SettingsWindow(QtCore.QObject):
             self.rtt.write_stuffed([RTT_COMMANDS.RTT_CMD_RUN])
             print("Started average graph.")
 
+	global measure_time
     def DUTPowerButtonPressed(self):
+    	global total_avg_consump
         if self.dut_power_button.text() == 'DUT Off':
             self.rtt.write_stuffed([RTT_COMMANDS.RTT_CMD_DUT, 0])
             self.dut_power_button.setText("DUT On")
+            self.measure_time = time.time()            
         else:
             self.dut_power_button.setText("DUT Off")
             self.rtt.write_stuffed([RTT_COMMANDS.RTT_CMD_DUT, 1])
+            dt = time.time() - self.measure_time
+            print(self.get_mAh(), "Consumped mAh value", dt, "sec")
+            self.clean_mAh()
 
     def TriggerSingleButtonClicked(self):
         self.trigger_start_button.setText('Start')
@@ -919,9 +925,18 @@ class SettingsWindow(QtCore.QObject):
     total_avg_consump = 0       
     avg_iteration_numb = 0
 
-    def update_status(self):
+    def get_mAh(self):
+    	""" Return consumped mAh value """
+    	global avg_timeout
+    	mAs_avg_result = self.total_avg_consump*self.avg_iteration_numb*avg_timeout/1e+6/3600
+    	return mAs_avg_result
 
-        global avg_timeout
+    def clean_mAh(self):
+    	""" Clean consumped mAh value"""
+    	self.total_avg_consump = 0	
+
+
+    def update_status(self):
 
         _max = max(PlotData.avg_y)
         _min = min(PlotData.avg_y)
@@ -931,11 +946,11 @@ class SettingsWindow(QtCore.QObject):
         # print(_avg,    _min,    _max )
         self.total_avg_consump += _avg
         self.avg_iteration_numb += 1
-        mAs_avg_result = self.total_avg_consump*self.avg_iteration_numb*avg_timeout/1e+6/3600
+        mAh = self.get_mAh()
 
         if self.avg_iteration_numb % 10 == 1:
             tmp_time = time.strftime('%H:%M:%S', time.localtime())
-            print(mAs_avg_result, "mAh", tmp_time, end="\t\r")
+            print(mAh, "mAh", tmp_time, end="\t\r")
         
 
         max_val, max_unit = self.unit_determine(_max)
