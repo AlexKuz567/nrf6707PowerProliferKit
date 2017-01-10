@@ -663,10 +663,10 @@ class SettingsWindow(QtCore.QObject):
             self.rtt.write_stuffed([RTT_COMMANDS.RTT_CMD_DUT, 1])
             dt = time.time() - self.measure_time
             print(self.get_mAh(), "Consumped mAh value", dt, "sec")
-            self.clean_mAh()
             measurestate = 0
             logdata("Turn OFF\n")
-            
+        
+        self.clean_mAh()    
         startmeastime = time.time()    
 		
 
@@ -959,8 +959,8 @@ class SettingsWindow(QtCore.QObject):
     def get_mAh(self):
     	""" Return consumped mAh value """
     	global avg_timeout
-    	mAs_avg_result = self.total_avg_consump*self.avg_iteration_numb*avg_timeout/1e+6/3600
-    	return mAs_avg_result
+    	result = self.total_avg_consump*avg_timeout/1e+6/3600
+    	return result
 
     def clean_mAh(self):
     	""" Clean consumped mAh value"""
@@ -986,7 +986,8 @@ class SettingsWindow(QtCore.QObject):
         if self.avg_iteration_numb % 10 == 1:
             #tmp_time = time.strftime('%H:%M:%S', time.localtime())
             dt = time.time()-startmeastime
-            print(mAh, "mAh", dt, " sec", end="\t\r")
+            #print(mAh, "mAh", dt, " sec ", mAh*3600/self.avg_iteration_numb/avg_timeout*1e+6," ", mAh*3600/dt*1e+6, " avg_cur", end='\t\r')
+            print(mAh, "mAh", dt, " sec ", end='\t\r')
             if measurestate:
             	logmsg = str(mAh) + "  mAh   " + str(dt) + " sec\n" 
             	logdata(logmsg)
