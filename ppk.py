@@ -933,7 +933,8 @@ class SettingsWindow(QtCore.QObject):
 
     def clean_mAh(self):
     	""" Clean consumped mAh value"""
-    	self.total_avg_consump = 0	
+    	self.total_avg_consump = 0
+    	self.avg_iteration_numb = 0	
 
 
     def update_status(self):
