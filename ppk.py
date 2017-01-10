@@ -1,3 +1,7 @@
+from __future__ import print_function
+import datetime
+import time
+
 try:
     import PySide
     import pynrfjprog
@@ -24,6 +28,8 @@ except ValueError as e:
     print (str(e))
     input("Press any key to exit...")
     exit()
+
+
 
 GLOBAL_OFFSET = 0.0e-6
 str_uA = u'[\u03bcA]'
@@ -110,6 +116,7 @@ class PlotData():
     a message box to avoid using QPixmap on main GUI thread
 '''
 
+avg_timeout = 200
 
 class ShowInfoWindow(QtCore.QThread):
     show_calib_signal = QtCore.Signal(str, str)
@@ -338,7 +345,7 @@ class SettingsWindow(QtCore.QObject):
         gb_trigger_layout_bottom2.addWidget(self.enable_ext_trigg_chkb)
         self.enable_ext_trigg_chkb.setChecked(False)
         self.enable_ext_trigg_chkb.stateChanged.connect(self.external_trig_changed)
-
+        
         gb_trigger_layout.addLayout(gb_trigger_layout_top)
         gb_trigger_layout.addLayout(gb_trigger_layout_bottom)
         gb_trigger_layout.addLayout(gb_trigger_layout_bottom1)
@@ -909,11 +916,27 @@ class SettingsWindow(QtCore.QObject):
 
         return val, unit
 
+    total_avg_consump = 0       
+    avg_iteration_numb = 0
+
     def update_status(self):
+
+        global avg_timeout
+
         _max = max(PlotData.avg_y)
         _min = min(PlotData.avg_y)
         _rms = rms_flat(PlotData.avg_y)
         _avg = np.average(PlotData.avg_y)
+
+        # print(_avg,    _min,    _max )
+        self.total_avg_consump += _avg
+        self.avg_iteration_numb += 1
+        mAs_avg_result = self.total_avg_consump*self.avg_iteration_numb*avg_timeout/1e+6/3600
+
+        if self.avg_iteration_numb % 10 == 1:
+            tmp_time = time.strftime('%H:%M:%S', time.localtime())
+            print(mAs_avg_result, "mAh", tmp_time, end="\t\r")
+        
 
         max_val, max_unit = self.unit_determine(_max)
         min_val, min_unit = self.unit_determine(_min)
@@ -1074,6 +1097,7 @@ class pms_plotter():
         ''' Send trigger value and start to firmware.
             Starts timers for updating graphs and calculations.
         '''
+        global avg_timeout
 
         # First we need to read out the calibrated measurmement R-values
         try:
@@ -1129,7 +1153,7 @@ class pms_plotter():
         # Timer to update rms value
         timer_rms = pg.QtCore.QTimer(self.gw)
         timer_rms.timeout.connect(self.settings.update_status)
-        timer_rms.start(200)  # 1s
+        timer_rms.start(avg_timeout)  # 1s
         self.rtt.write_stuffed([RTT_COMMANDS.RTT_CMD_RUN])
         self.rtt.write_stuffed([RTT_COMMANDS.RTT_CMD_AVG_NUM_SET, 0x00, 1])
 
@@ -1172,6 +1196,7 @@ class pms_plotter():
             f = struct.unpack('f', s)[0]
             PlotData.avg_y[:-1] = PlotData.avg_y[1:]  # shift data in the array one sample left
             PlotData.avg_y[-1] = f / 1e6 - self.global_offset
+            #print(data[0])
 
             self.update_avg_curve = True
         else:  # Trigger data received
