@@ -146,6 +146,20 @@ class CloseInfoWindow(QtCore.QThread):
         self.close_calib_signal.emit()
 
 
+startmeastime = time.time()
+measurestate = 0
+datafilename = "measure_data.txt"
+
+def logdata(msg):
+	"""Log our data to text file"""
+	dataf = open(datafilename,'at')
+	try: 
+		dataf.write(msg)
+	finally:
+		dataf.close()
+
+
+
 class SettingsWindow(QtCore.QObject):
     def __init__(self, plot_data, plot_window):
         QtCore.QObject.__init__(self)
@@ -193,6 +207,7 @@ class SettingsWindow(QtCore.QObject):
         self.settings_widget.destroyed.connect(self.destroyedEvent)
         self.settings_widget.show()
         print("Power Profiler Kit started, initializing...")
+
 
     def write_new_res(self, r1, r2, r3):
         r1_list = []
@@ -627,18 +642,34 @@ class SettingsWindow(QtCore.QObject):
             print("Started average graph.")
 
 	global measure_time
+
+
     def DUTPowerButtonPressed(self):
     	global total_avg_consump
+    	global datafilename
+    	global measurestate
+    	global startmeastime
+
         if self.dut_power_button.text() == 'DUT Off':
             self.rtt.write_stuffed([RTT_COMMANDS.RTT_CMD_DUT, 0])
             self.dut_power_button.setText("DUT On")
-            self.measure_time = time.time()            
+            self.measure_time = time.time()
+            measurestate = 1
+            logdata("Turn ON\n")
+            
+            
         else:
             self.dut_power_button.setText("DUT Off")
             self.rtt.write_stuffed([RTT_COMMANDS.RTT_CMD_DUT, 1])
             dt = time.time() - self.measure_time
             print(self.get_mAh(), "Consumped mAh value", dt, "sec")
             self.clean_mAh()
+            measurestate = 0
+            logdata("Turn OFF\n")
+            
+        startmeastime = time.time()    
+		
+
 
     def TriggerSingleButtonClicked(self):
         self.trigger_start_button.setText('Start')
@@ -939,6 +970,9 @@ class SettingsWindow(QtCore.QObject):
 
     def update_status(self):
 
+    	global measurestate
+    	global startmeastime
+
         _max = max(PlotData.avg_y)
         _min = min(PlotData.avg_y)
         _rms = rms_flat(PlotData.avg_y)
@@ -950,8 +984,12 @@ class SettingsWindow(QtCore.QObject):
         mAh = self.get_mAh()
 
         if self.avg_iteration_numb % 10 == 1:
-            tmp_time = time.strftime('%H:%M:%S', time.localtime())
-            print(mAh, "mAh", tmp_time, end="\t\r")
+            #tmp_time = time.strftime('%H:%M:%S', time.localtime())
+            dt = time.time()-startmeastime
+            print(mAh, "mAh", dt, " sec", end="\t\r")
+            if measurestate:
+            	logmsg = str(mAh) + "  mAh   " + str(dt) + " sec\n" 
+            	logdata(logmsg)
         
 
         max_val, max_unit = self.unit_determine(_max)
