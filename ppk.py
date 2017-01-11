@@ -655,19 +655,22 @@ class SettingsWindow(QtCore.QObject):
             self.dut_power_button.setText("DUT On")
             self.measure_time = time.time()
             measurestate = 1
-            logdata("Turn ON\n")
+            print("\nTurn OFF")
+            logdata("Turn OFF\n")
             
             
         else:
             self.dut_power_button.setText("DUT Off")
             self.rtt.write_stuffed([RTT_COMMANDS.RTT_CMD_DUT, 1])
-            dt = time.time() - self.measure_time
-            print(self.get_mAh(), "Consumped mAh value", dt, "sec")
+
             measurestate = 0
-            logdata("Turn OFF\n")
-        
+            print("\nTurn ON\n")
+            logdata("Turn ON\n")
+
+        dt = time.time() - self.measure_time
+        print(self.get_mAh(), "Consumped mAh value", dt, "sec")        
         self.clean_mAh()    
-        startmeastime = time.time()    
+        startmeastime = time.time()
 		
 
 
@@ -987,7 +990,8 @@ class SettingsWindow(QtCore.QObject):
             #tmp_time = time.strftime('%H:%M:%S', time.localtime())
             dt = time.time()-startmeastime
             #print(mAh, "mAh", dt, " sec ", mAh*3600/self.avg_iteration_numb/avg_timeout*1e+6," ", mAh*3600/dt*1e+6, " avg_cur", end='\t\r')
-            print(mAh, "mAh", dt, " sec ", end='\t\r')
+            calc_mA_current = mAh*3600/self.avg_iteration_numb/avg_timeout*1e+9
+            print("mAh=", mAh, " sec=", dt, " calc_mA=" , calc_mA_current, end='\r')
             if measurestate:
             	logmsg = str(mAh) + "  mAh   " + str(dt) + " sec\n" 
             	logdata(logmsg)
