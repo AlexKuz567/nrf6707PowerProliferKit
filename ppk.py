@@ -671,7 +671,8 @@ class SettingsWindow(QtCore.QObject):
         print(self.get_mAh(), "Consumped mAh value", dt, "sec")        
         self.clean_mAh()    
         startmeastime = time.time()
-		
+        tmp_time = time.strftime('%D:%H:%M:%S', time.localtime())
+        logdata(str(tmp_time)+'\n')
 
 
     def TriggerSingleButtonClicked(self):
