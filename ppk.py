@@ -962,7 +962,7 @@ class SettingsWindow(QtCore.QObject):
     def get_mAh(self):
     	""" Return consumped mAh value """
     	global avg_timeout
-    	result = self.total_avg_consump*avg_timeout/1e+6/3600
+    	result = self.total_avg_consump*avg_timeout/1e+3/3600
     	return result
 
     def clean_mAh(self):
@@ -990,7 +990,7 @@ class SettingsWindow(QtCore.QObject):
             #tmp_time = time.strftime('%H:%M:%S', time.localtime())
             dt = time.time()-startmeastime
             #print(mAh, "mAh", dt, " sec ", mAh*3600/self.avg_iteration_numb/avg_timeout*1e+6," ", mAh*3600/dt*1e+6, " avg_cur", end='\t\r')
-            calc_mA_current = mAh*3600/self.avg_iteration_numb/avg_timeout*1e+9
+            calc_mA_current = mAh*3600/self.avg_iteration_numb/avg_timeout*1e+6
             print("mAh=", mAh, " sec=", dt, " calc_mA=" , calc_mA_current, end='\r')
             if measurestate:
             	logmsg = str(mAh) + "  mAh   " + str(dt) + " sec\n" 
